@@ -1,18 +1,27 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, Image, StyleSheet } from 'react-native';
 import { loadTensorflowModel } from 'react-native-fast-tflite';
-
+import {
+  ImagePickerResponse,
+  launchCamera,
+  launchImageLibrary,
+} from 'react-native-image-picker';
+let model
 const App = () => {
-  const load = async () => {
-    // const model = await loadTensorflowModel('https://tfhub.dev/google/lite-model/object_detection_v1.tflite')
-    // const model = await loadTensorflowModel({url:'https://tfhub.dev/google/lite-model/object_detection_v1.tflite'})
-    const model = await loadTensorflowModel(require('./assets/redbull-weights-ir.tflite'))
-    //  console.log(model,"--- model");
-  }
 
   useEffect(() => {
     load()
   }, []);
+  const load = async () => {
+    // const model = require("./models/model.tflite");
+    // console.log(model)
+
+    // const model = await loadTensorflowModel('https://tfhub.dev/google/lite-model/object_detection_v1.tflite')
+    // const model = await loadTensorflowModel({url:'https://tfhub.dev/google/lite-model/object_detection_v1.tflite'})
+    model = await loadTensorflowModel(require('./models/model.tflite'))
+    console.log(model, "--- model");
+  }
+
   const chooseFile = async () => {
     return
     launchImageLibrary({ mediaType: 'photo' }, async response => {
@@ -39,11 +48,13 @@ const App = () => {
   };
 
   const openCamera = () => {
-    return
     launchCamera({ mediaType: 'photo' }, async response => {
       if (!response.didCancel) {
         if (response.assets && response.assets.length > 0) {
           try {
+            console.log("response ", response.assets[0].uri)
+            console.log(model)
+            return
             const res =
               await CustomObjectDetectionModule.startCustomObjectDetection(
                 response.assets[0].uri,
@@ -51,7 +62,9 @@ const App = () => {
             setImage(response.assets[0].uri);
             setResult(res);
           } catch (error) {
+
             Alert.alert('Error', 'No Object Detected', [{ text: 'OK' }]);
+            return
             setImage({});
             setResult('');
           }
